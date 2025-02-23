@@ -1,31 +1,29 @@
-# from flask import request, jsonify
+from flask import request, jsonify, Blueprint
+import datetime
 # import jwt
-# import datetime
-# from werkzeug.security import check_password_hash
-# from main import app
-# from ..DatabaseConnection import db
-# from ..Models.Users import User
-# from functools import wraps
+from werkzeug.security import check_password_hash
+from main import app
+from ..DatabaseConnection import db
+from ..Models.Users import User
+from functools import wraps
 
-# @app.route("/login", methods=["POST"])
-# def login():
-#     data = request.get_json()
-#     username = data.get('username')
-#     password = data.get('password')
+post_bp = Blueprint("post_bp", __name__)
 
-#     user = User.query.filter_by(username=username).first()
+@app.route("/login", methods=["POST"])
+def login():
+    data = request.get_json()
+    login = data.get('login')
+    password = data.get('password')
 
-#     if user and check_password_hash(user.password, password):
-#         token = jwt.encode({'user_id': user.id, 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)}, app.config['SECRET_KEY'], algorithm='HS256')
-#         return jsonify({'token': token}), 200
-#     else:
-#         return jsonify({"message": "Invalid credentials"}), 401
+    user = User.query.filter_by(Login=login).first()
 
-
+    if user and check_password_hash(user.password, password):
+        token = jwt.encode({'user_id': user.Id, 'exp': datetime.datetime.utcnow() + datetime.timedelta(hours=1)}, app.config['SECRET_KEY'], algorithm='HS256')
+        return jsonify({'token': token}), 200
+    else:
+        return jsonify({"message": "Credenciais inválidas"}), 401
 
 # ##AINDA NÃO FAÇO IDEIA DO QUE É ENTAO CUIDADO
-
-
 
 # # from functools import wraps
 # # from flask import request, jsonify

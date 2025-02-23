@@ -9,9 +9,11 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db.init_app(app)
 
+from Scripts.Controllers.AuthController import login
 from Scripts.Controllers.UserController import user_bp
 from Scripts.Controllers.PostController import post_bp
 
+app.register_blueprint(login)
 app.register_blueprint(user_bp)
 app.register_blueprint(post_bp)
 
