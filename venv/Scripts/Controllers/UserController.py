@@ -1,9 +1,11 @@
 from flask import Blueprint, request, jsonify
+from datetime import datetime
+
 from ..DatabaseConnection import db
 from ..Models.LogType import LogType
 from ..Models.LogUsers import LogUser
 from ..Models.Users import User
-from datetime import datetime
+from ..Controllers.AuthController import token_required
 
 user_bp = Blueprint("user_bp", __name__)
 
@@ -26,6 +28,7 @@ def create_user():
     return jsonify({"message": "Usuário criado com sucesso"}), 201
 
 @user_bp.route("/users/update/<int:id>", methods=["PUT"])
+@token_required
 def update_user(id):
     data = request.json
     user = User.query.filter_by(Id=id).first()
@@ -43,6 +46,7 @@ def update_user(id):
         return jsonify({"message": "Usuário não encontrado"}), 404
 
 @user_bp.route("/users/delete/<int:id>", methods=["DELETE"])
+@token_required
 def delete_user(id):
     user = User.query.filter_by(Id=id, Active=1).first()
     
@@ -59,6 +63,7 @@ def delete_user(id):
 
 
 @user_bp.route("/users/search/<int:id>", methods=["GET"], endpoint="search_user")
+@token_required
 def search_user(id):
     user = User.query.filter_by(Id=id, Active=1).first()
 
@@ -72,7 +77,8 @@ def search_user(id):
     return jsonify({"message": "Usuário encontrado", "user": user_data}), 200
 
 @user_bp.route("/users/search", methods=["GET"], endpoint="search_all_users")
-def search_users():
+@token_required
+def search_users(current_user):
     users = User.query.filter_by(Active=1).all()
 
     if not users:

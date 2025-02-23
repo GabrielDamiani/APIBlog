@@ -1,13 +1,16 @@
 from flask import Blueprint, request, jsonify
+from datetime import datetime
+
 from ..DatabaseConnection import db
 from ..Models.Posts import Post
 from ..Models.LogPosts import LogPost
-from datetime import datetime
 from ..Models.Users import User
+from ..Controllers.AuthController import token_required
 
 post_bp = Blueprint("post_bp", __name__)
 
 @post_bp.route("/posts/create", methods=["POST"])
+@token_required
 def create_post():
     data = request.json
     new_post = Post(Title=data["title"], Content=data["content"], IdCreator=data["author_id"], Active=1)
@@ -20,6 +23,7 @@ def create_post():
     return jsonify({"message": "Post criado com sucesso"}), 201
 
 @post_bp.route("/posts/update/<int:id>", methods=["PUT"])
+@token_required
 def update_post(id):
     data = request.json
     post = Post.query.filter_by(Id=id).first()
@@ -37,7 +41,8 @@ def update_post(id):
     else:
         return jsonify({"message": "Post não encontrado"}), 404
 
-@post_bp.route("/posts/delete/<int:id>", methods=["DELETE"])   
+@post_bp.route("/posts/delete/<int:id>", methods=["DELETE"])
+@token_required
 def delete_post(id):
     post = Post.query.filter_by(Id=id).first()
     if post:
@@ -52,6 +57,7 @@ def delete_post(id):
         return jsonify({"message": "Post não encontrado"}), 404
 
 @post_bp.route("/posts/search/<int:id>", methods=["GET"], endpoint="search_post_by_id")
+@token_required
 def search_post(id):
     post = Post.query.filter_by(Id=id, Active=1).first()
 
@@ -66,6 +72,7 @@ def search_post(id):
     return jsonify({"message": "Usuário encontrado", "post": post_data}), 200
     
 @post_bp.route("/posts/search", methods=["GET"], endpoint="search_all_posts")
+@token_required
 def search_post():
     search_posts = db.session.query(
         Post.Id,
@@ -92,6 +99,7 @@ def search_post():
         return jsonify({"message": "Post não encontrado"}), 404
 
 @post_bp.route("/posts/search/by/user/<int:id>", methods=["GET"], endpoint="search_all_posts_by_user")
+@token_required
 def search_post(id):
     search_posts = db.session.query(Post).filter(Post.IdCreator == id).all()
 
@@ -106,3 +114,4 @@ def search_post(id):
         return jsonify(result), 200
     else:
         return jsonify({"message": "Post não encontrado"}), 404
+
