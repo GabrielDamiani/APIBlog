@@ -24,37 +24,47 @@ def create_post():
 
 @post_bp.route("/posts/update/<int:id>", methods=["PUT"])
 @token_required
-def update_post(id):
+def update_post(current_user, id):
     data = request.json
     post = Post.query.filter_by(Id=id).first()
-    if post:
-        post.Title = data["title"]
-        post.Content = data["content"]
-        post.Active = 1
-        db.session.commit()
 
-        log_update = LogPost(IdLogType=2, IdTargetPost=post.Id, IdAlterationBy=1, ActionDate=datetime.now())
-        print('o log é o id do post:', log_update)
-        db.session.add(log_update)
-        db.session.commit()
-        return jsonify({"message": "Post atualizado com sucesso"}), 200
+    if post:
+        if current_user.Id == post.IdCreator or current_user.Admin == 1:
+            post.Title = data.get("title")
+            post.Content = data.get("content")
+            post.Active = 1
+            db.session.commit()
+
+            log_update = LogPost(IdLogType=2, IdTargetPost=post.Id, IdAlterationBy=current_user.Id, ActionDate=datetime.now())
+            db.session.add(log_update)
+            db.session.commit()
+
+            return jsonify({"Mensagem": "Post atualizado com sucesso"}), 200
+        else:
+            return jsonify({"Mensagem": "Permissao negada. Somente o autor ou um administrador podem realizar esta acao."}), 403
     else:
-        return jsonify({"message": "Post não encontrado"}), 404
+        return jsonify({"Mensagem": "Post nao encontrado"}), 404
+
 
 @post_bp.route("/posts/delete/<int:id>", methods=["DELETE"])
 @token_required
-def delete_post(id):
+def delete_post(current_user, id):
     post = Post.query.filter_by(Id=id).first()
-    if post:
-        post.Active = 0
-        db.session.commit()
 
-        log_delete = LogPost(IdLogType=3, IdTargetPost=post.Id, IdAlterationBy=1, ActionDate=datetime.now())
-        db.session.add(log_delete)
-        db.session.commit()
-        return jsonify({"message": "Post deletado com sucesso"}), 200
+    if post:
+        if current_user.Id == post.IdCreator or current_user.Admin == 1:
+            post.Active = 0
+            db.session.commit()
+
+            log_delete = LogPost(IdLogType=3, IdTargetPost=post.Id, IdAlterationBy=current_user.Id, ActionDate=datetime.now())
+            db.session.add(log_delete)
+            db.session.commit()
+
+            return jsonify({"Mensagem": "Post deletado com sucesso"}), 200
+        else:
+            return jsonify({"Mensagem": "Permissao negada. Somente o autor ou um administrador podem realizar esta acao."}), 403
     else:
-        return jsonify({"message": "Post não encontrado"}), 404
+        return jsonify({"Mensagem": "Post nao encontrado"}), 404
 
 @post_bp.route("/posts/search/<int:id>", methods=["GET"], endpoint="search_post_by_id")
 @token_required

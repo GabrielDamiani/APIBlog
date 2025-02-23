@@ -22,8 +22,6 @@ def login():
     else:
         return jsonify({"Mensagem": "Credenciais invalidas, tente novamente"}), 401
 
-# ##AINDA NÃO FAÇO IDEIA DO QUE É ENTAO CUIDADO
-
 def token_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):

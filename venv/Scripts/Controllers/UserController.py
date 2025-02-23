@@ -9,6 +9,7 @@ from ..Controllers.AuthController import token_required
 
 user_bp = Blueprint("user_bp", __name__)
 
+#colocar o id da pessoa no log
 @user_bp.route("/users/create", methods=["POST"])
 def create_user():
     data = request.get_json()
@@ -29,37 +30,43 @@ def create_user():
 
 @user_bp.route("/users/update/<int:id>", methods=["PUT"])
 @token_required
-def update_user(id):
+def update_user(current_user, id):
     data = request.json
     user = User.query.filter_by(Id=id).first()
+
     if user:
-        user.Name = data["username"]
-        user.Login = data["email"]
-        user.Password = data["password"]
+        if current_user.Id == user.Id or current_user.Admin == 1:
+            user.Name = data.get("username")
+            user.Login = data.get("email")
+            user.Password = data.get("password")
 
-        log_update = LogUser(IdLogType=2, IdTargetUser=user.Id, IdAlterationBy=1, ActionDate=datetime.now())
-        db.session.add(log_update)
-        db.session.commit()
+            log_update = LogUser(IdLogType=2, IdTargetUser=user.Id, IdAlterationBy=current_user.Id, ActionDate=datetime.now())
+            db.session.add(log_update)
+            db.session.commit()
 
-        return jsonify({"message": "Usuário atualizado com sucesso"}), 200
+            return jsonify({"Mensagem": "Usuario atualizado com sucesso"}), 200
+        else:
+            return jsonify({"Mensagem": "Permissao negada. Somente o usuario ou um administrador podem realizar esta açao."}), 403
     else:
-        return jsonify({"message": "Usuário não encontrado"}), 404
+        return jsonify({"Mensagem": "Usuario nao encontrado"}), 404
+
 
 @user_bp.route("/users/delete/<int:id>", methods=["DELETE"])
 @token_required
-def delete_user(id):
+def delete_user(current_user, id):
     user = User.query.filter_by(Id=id, Active=1).first()
     
     if user:
-        user.Active = 0
+        if current_user.Id == user.Id or current_user.Admin == 1:
+            user.Active = 0
 
-        log_delete = LogUser(IdLogType=3, IdTargetUser=user.Id, IdAlterationBy=1, ActionDate=datetime.now())
-        db.session.add(log_delete)
-        db.session.commit()
+            log_delete = LogUser(IdLogType=3, IdTargetUser=user.Id, IdAlterationBy=current_user.Id, ActionDate=datetime.now())
+            db.session.add(log_delete)
+            db.session.commit()
 
-        return jsonify({"message": "Usuário excluído com sucesso"}), 200
+        return jsonify({"Mensagem": "Usuario excluido com sucesso"}), 200
     else:
-        return jsonify({"message": "Usuário não encontrado"}), 404
+        return jsonify({"Mensagem": "Usuario nao encontrado"}), 404
 
 
 @user_bp.route("/users/search/<int:id>", methods=["GET"], endpoint="search_user")
