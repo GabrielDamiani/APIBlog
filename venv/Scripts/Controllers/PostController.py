@@ -10,7 +10,7 @@ post_bp = Blueprint("post_bp", __name__)
 @post_bp.route("/posts/create", methods=["POST"])
 def create_post():
     data = request.json
-    new_post = Post(title=data["title"], content=data["content"], active=data["active"])
+    new_post = Post(title=data["title"], content=data["content"], active=1)
     db.session.add(new_post)
 
     log_create = LogPost(IdLogType=1, IdTargetPost=new_post.id, IdAlterationBy=1, ActionDate=datetime.now())
@@ -24,7 +24,7 @@ def update_post(id):
     if post:
         post.title = data["title"]
         post.content = data["content"]
-        post.active = data["active"]
+        post.active = 1
 
         log_update = LogPost(IdLogType=2, IdTargetPost=post.id, IdAlterationBy=1, ActionDate=datetime.now())
         db.session.add(log_update)
@@ -32,7 +32,7 @@ def update_post(id):
     else:
         return jsonify({"message": "Post não encontrado"}), 404
 
-@post_bp.route("/posts/delete/<int:id>", methods=["DELETE"])
+@post_bp.route("/posts/delete/<int:id>", methods=["PUT"])
 def delete_post(id):
     post = Post.query.filter_by(id=id).first()
     if post:
@@ -43,8 +43,19 @@ def delete_post(id):
         return jsonify({"message": "Post excluído com sucesso"}), 200
     else:
         return jsonify({"message": "Post não encontrado"}), 404
+    
+def delete_post(id):
+    post = Post.query.filter_by(id=id).first()
+    if post:
+        post.active = 0
 
-@post_bp.route("/posts/search/<int:id>", methods=["GET"], endpoint="search_all_posts")
+        log_delete = LogPost(IdLogType=3, IdTargetPost=post.id, IdAlterationBy=1, ActionDate=datetime.now())
+        db.session.add(log_delete)
+        return jsonify({"message": "Post atualizado com sucesso"}), 200
+    else:
+        return jsonify({"message": "Post não encontrado"}), 404
+
+@post_bp.route("/posts/search/<int:id>", methods=["GET"], endpoint="search_all_posts") #Colocar o Id da pessoa no resultado
 def search_post(id):
     search_post = Post.query.filter_by(id=id).All()
     if search_post:
