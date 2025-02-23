@@ -6,10 +6,11 @@ from ..Models.LogType import LogType
 from ..Models.LogUsers import LogUser
 from ..Models.Users import User
 from ..Controllers.AuthController import token_required
+from ..Models.Posts import Post
+from ..Models.LogPosts import LogPost
 
 user_bp = Blueprint("user_bp", __name__)
 
-#colocar o id da pessoa no log
 @user_bp.route("/users/create", methods=["POST"])
 def create_user():
     data = request.get_json()
@@ -59,15 +60,23 @@ def delete_user(current_user, id):
     if user:
         if current_user.Id == user.Id or current_user.Admin == 1:
             user.Active = 0
+            
+            posts = Post.query.filter_by(IdCreator=id, Active=1).all()
+            for post in posts:
+                post.Active = 0
+                log_delete_post = LogPost(IdLogType=3, IdTargetPost=post.Id, IdAlterationBy=current_user.Id, ActionDate=datetime.now())
+                db.session.add(log_delete_post)
 
-            log_delete = LogUser(IdLogType=3, IdTargetUser=user.Id, IdAlterationBy=current_user.Id, ActionDate=datetime.now())
-            db.session.add(log_delete)
+            log_delete_user = LogUser(IdLogType=3, IdTargetUser=user.Id, IdAlterationBy=current_user.Id, ActionDate=datetime.now())
+            db.session.add(log_delete_user)
+
             db.session.commit()
 
-        return jsonify({"Mensagem": "Usuario excluido com sucesso"}), 200
+            return jsonify({"Mensagem": "Usuario e seus posts excluidos com sucesso"}), 200
+        else:
+            return jsonify({"Mensagem": "Permissao negada"}), 403
     else:
-        return jsonify({"Mensagem": "Usuario nao encontrado"}), 404
-
+        return jsonify({"Mensagem": "Usuario não encontrado"}), 404
 
 @user_bp.route("/users/search/<int:id>", methods=["GET"], endpoint="search_user")
 @token_required
