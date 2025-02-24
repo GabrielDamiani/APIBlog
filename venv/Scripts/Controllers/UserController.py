@@ -23,7 +23,7 @@ def create_user():
     db.session.add(new_user)
     db.session.commit()
     
-    log_create = LogUser(IdLogType=1, IdTargetUser=new_user.Id, IdAlterationBy=1, ActionDate=datetime.now())
+    log_create = LogUser(IdLogType=1, IdTargetUser=new_user.Id, IdAlterationBy=new_user.Id, ActionDate=datetime.now())
     db.session.add(log_create)
     db.session.commit()
     
